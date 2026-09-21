@@ -753,7 +753,7 @@
       row.innerHTML = '<div class="odds__who">' + esc(o.who) + '<small>' + rich(o.note) + '</small></div>' +
         '<div class="odds__track" role="img" aria-label="' + esc(o.who + ': ' + o.label) + '">' +
         '<span class="odds__bar" style="left:' + lo + '%;width:' + Math.max(0, hi - lo) + '%"></span>' +
-        '<span class="odds__val" style="left:' + Math.min(hi + 1.5, 78) + '%">' + esc(o.label) + '</span></div>';
+        '<span class="odds__val" style="left:calc(' + Math.min(hi, 76) + '% + ' + (hi - lo < 2 ? 16 : 4) + 'px)">' + esc(o.label) + '</span></div>';
       el.appendChild(row);
     });
     var sc = h('div', { class: 'odds__scale', 'aria-hidden': 'true' });
