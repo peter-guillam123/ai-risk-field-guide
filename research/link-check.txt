@@ -1,0 +1,11 @@
+ok: 134 of 144
+401 | read | reuters-week | https://www.reuters.com/business/its-ai-agent-spent-days-hacking-company-sources-say-openai-did-not-notice-week-2026-07-24/
+403 | seen | nyt-probe | https://www.nytimes.com/2026/09/03/technology/openai-hugging-face-hack.html
+403 | seen | hawley-axios | https://www.axios.com/2026/09/10/openai-hugging-face-senate-investigation-hawley
+403 | seen | politico-poll | https://www.politico.com/news/2026/09/16/poll-ai-technology-risks-humanity-trump-voters-01078087
+403 | seen | bloomberg-ng | https://www.bloomberg.com/news/articles/2026-09-17/ai-pioneer-andrew-ng-calls-extinction-fears-science-fiction
+403 | seen | uk-statement | https://www.computerweekly.com/news/366650021/UK-government-proposes-AI-first-responders-for-cyber-attacks
+403 | seen | sobel-bill | https://bills.parliament.uk/bills/4288
+403 | ref | nyt-kokotajlo | https://www.nytimes.com/2024/06/04/technology/openai-culture-whistleblowers.html
+403 | seen | axios-amodei | https://www.axios.com/2025/09/17/anthropic-dario-amodei-p-doom-25-percent
+403 | ref | parrots | https://dl.acm.org/doi/10.1145/3442188.3445922
