@@ -79,6 +79,8 @@ GUIDE.sources = {
   'politico-poll': { t: 'Poll: most Americans think AI could one day destroy humanity', p: 'Politico', d: '16 September 2026', u: 'https://www.politico.com/news/2026/09/16/poll-ai-technology-risks-humanity-trump-voters-01078087', v: 'seen', note: 'Figures cross-checked against two other reports of the same poll' },
   'cbs-poll': { t: 'Will AI harm humans? CBS News/YouGov poll', p: 'CBS News', d: '18 September 2026', u: 'https://www.cbsnews.com/news/will-a-i-harm-humans-opinion-poll/', v: 'read' },
   'pew-2026': { t: 'Young adults in the US are increasingly wary of AI', p: 'Pew Research Center', d: '18 August 2026', u: 'https://www.pewresearch.org/short-reads/2026/08/18/young-adults-in-the-us-are-increasingly-wary-of-ai-concerned-it-will-take-jobs/', v: 'read' },
+  'cbs-huang': { t: 'Nvidia\u2019s Jensen Huang rejects AI extinction warnings as "doomsday narratives"', p: 'CBS News', d: '20 September 2026', u: 'https://www.cbsnews.com/news/jensen-huang-nvidia-rejects-ai-extinction-warnings/', v: 'read' },
+  'tnw-huang': { t: 'Weeks ago Jensen Huang said labs should pace themselves if they felt out of control. Now he puts the risk at 0%', p: 'The Next Web', d: '19 September 2026', u: 'https://thenextweb.com/news/huang-0-percent-hardening-pace-if-out-of-control', v: 'read' },
   'tnw-ng': { t: 'Andrew Ng: AI extinction fears are science fiction', p: 'The Next Web', d: '17 September 2026', u: 'https://thenextweb.com/news/andrew-ng-extinction-science-fiction', v: 'read' },
   'bloomberg-ng': { t: 'AI pioneer Andrew Ng calls extinction fears science fiction', p: 'Bloomberg', d: '17 September 2026', u: 'https://www.bloomberg.com/news/articles/2026-09-17/ai-pioneer-andrew-ng-calls-extinction-fears-science-fiction', v: 'seen' },
   'examiner-sacks': { t: 'David Sacks on AI pacing, Anthropic and OpenAI', p: 'Washington Examiner', d: '13 September 2026', u: 'https://www.washingtonexaminer.com/policy/technology/4725242/david-sacks-ai-pacing-anthropic-openai-regulations/', v: 'read' },
@@ -303,10 +305,10 @@ GUIDE.camps = [
         says: 'Revoked his predecessor’s AI safety order in his first week, and has moved to override state AI laws.[[wh-jan2025]][[wh-dec2025]]',
         since: 'On 14 September he called warnings of AI takeover a hoax and said a strong president is the only guardrail needed.[[nbc-trump]] Days later he promised an AI Force.[[cbs-aiforce]] In the same week, his officials proposed an AI incident hotline to China.[[afp-china]]',
         why: 'He has not said how powerful he thinks AI will become, so we put him in the middle on that line. On restraint he could not be clearer.' },
-      { name: 'Jensen Huang', initials: 'JH', role: 'Chief executive of Nvidia, which makes most AI chips', x: 74, y: 9,
+      { name: 'Jensen Huang', initials: 'JH', role: 'Chief executive of Nvidia, which makes most AI chips', x: 74, y: 5,
         says: 'His company’s sales depend on ever-bigger AI training runs.',
-        since: 'Said Nvidia would not let a slowdown happen.[[tc-slow]]',
-        why: 'One blunt remark, reported by TechCrunch, and an obvious commercial interest.' }
+        since: 'Told CBS News there is a 0% chance that AI ends the world by 2030, called scaring people irresponsible, and said existing laws on liability and cyber-security are enough.[[cbs-huang]] He wants the industry to go as fast as it can. Weeks earlier he had said a company that felt out of control should pace itself. The two are hard to square.[[tnw-huang]]',
+        why: 'The flattest denial from any major figure, and he rejects new rules. His company\u2019s sales depend on AI training continuing to grow.' }
     ]
   },
   {
