@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI risk field guide</title>
+<meta name="description" content="A plain-English guide to the argument about AI and existential risk: how the technology works, what went wrong in summer 2026, and who is saying what, with sources throughout.">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Mono:wght@400;500&family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the guide</a>
+
+<header class="topbar">
+  <div class="topbar__in">
+    <a class="topbar__mark" href="#top">AI risk field guide</a>
+    <nav class="topbar__nav" aria-label="Sections">
+      <a href="#short">Short version</a>
+      <a href="#machine">The machine</a>
+      <a href="#agents">Agents</a>
+      <a href="#incident">Hugging Face</a>
+      <a href="#since">Since July</a>
+      <a href="#argument">The argument</a>
+      <a href="#factions">The factions</a>
+      <a href="#spot">Spot the faction</a>
+      <a href="#evidence">Evidence</a>
+      <a href="#governments">Governments</a>
+      <a href="#words">Jargon</a>
+      <a href="#questions">Five questions</a>
+      <a href="#sources">Sources</a>
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch between light and dark">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="currentColor"/></svg>
+    </button>
+  </div>
+  <div class="progress" aria-hidden="true"></div>
+</header>
+
+<main id="main">
+
+<!-- ================================================================ HERO -->
+<div class="hero wrap" id="top">
+  <div class="hero__grid">
+    <div>
+      <p class="eyebrow">A field guide for people who know nothing about AI</p>
+      <h1>Is AI going to <em>kill us all?</em></h1>
+      <p class="hero__stand">Some of the people building it say it might. Others call that science fiction, or a sales pitch. This is a plain guide to a very loud argument: how the technology works, what went wrong this summer, and who is shouting what, and why.</p>
+      <div class="hero__meta">
+        <span class="stamp stamp--live">Correct as of <span data-asof>21 September 2026</span></span>
+        <span class="stamp">About 20 minutes</span>
+        <span class="stamp"><a href="#sources" style="color:inherit"><span id="sources-count">0</span> sources, all linked</a></span>
+      </div>
+    </div>
+
+    <div class="noise is-noisy" id="noise" aria-labelledby="noise-title">
+      <div class="noise__head">
+        <span class="noise__title" id="noise-title">What your feed sounds like</span>
+        <button class="btn" id="noise-btn" type="button" aria-pressed="false">Sort them out</button>
+      </div>
+      <div class="noise__stage"></div>
+      <p class="noise__foot">These are not real quotes. They are the sort of thing each camp says. The rest of this page explains who they are and whether they have a point.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= SHORT VERSION -->
+<section class="chapter wrap" id="short" data-scan="short">
+  <div class="prose">
+    <p class="eyebrow">If you read nothing else</p>
+    <h2>The short version</h2>
+  </div>
+  <ul class="short rv" id="short-list"></ul>
+</section>
+
+<!-- ========================================================= THE MACHINE -->
+<section class="chapter wrap" id="machine">
+  <div class="prose">
+    <p class="eyebrow">Part one</p>
+    <h2>What the machine is</h2>
+    <p class="lede">A chatbot such as ChatGPT, Claude or Gemini runs on a <b>large language model</b>. Its core job is easy to state. Given some text, guess what comes next.</p>
+    <p>That is all the toy below does, and it is most of what the real thing does too. The real thing is just far better at guessing.</p>
+  </div>
+
+  <figure class="plate rv" id="pred" aria-labelledby="pred-title">
+    <div class="plate__head"><span class="plate__no">Plate 1</span><h3 class="plate__title" id="pred-title">Guess the next word</h3></div>
+    <div class="plate__body pred">
+      <div>
+        <p class="pred__sentence" id="pred-sentence" aria-live="off"></p>
+        <div class="pred__controls">
+          <button class="btn" id="pred-pick" type="button">Let the model choose</button>
+          <button class="btn btn--ghost" id="pred-reset" type="button">Start again</button>
+        </div>
+        <div class="pred__temp">
+          <span class="pred__temp-label" id="pred-temp-label">How much risk it takes</span>
+          <div class="seg" id="pred-temp" role="group" aria-labelledby="pred-temp-label">
+            <button type="button" data-t="cautious" aria-pressed="false">Cautious</button>
+            <button type="button" data-t="normal" aria-pressed="true">Normal</button>
+            <button type="button" data-t="wild" aria-pressed="false">Wild</button>
+          </div>
+        </div>
+        <p class="vh" id="pred-live" aria-live="polite"></p>
+      </div>
+      <div>
+        <p class="pred__q" id="pred-q"></p>
+        <div class="bars" id="pred-bars"></div>
+      </div>
+    </div>
+    <figcaption class="plate__cap"><strong>What to notice</strong> Pick a word yourself, or let the model roll the dice. Choose "keyboard" and the odds for the next word change, because the model weighs everything written so far. The percentages here are made up to show the idea. A real model picks from tens of thousands of word-pieces, called tokens, every time.<a class="ref" data-src="gpt3"></a></figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>Nobody wrote the rules</h3>
+    <p>Here is the odd part. No engineer typed in grammar, or facts about cats. They built a vast grid of adjustable numbers, called <b>parameters</b> (175 billion of them in GPT-3, back in 2020, and more since<a class="ref" data-src="gpt3"></a>), and had it read a large share of the public internet. Each time it guessed the next word wrong, the numbers were nudged a little. Repeat that trillions of times and the guesses get very good.</p>
+    <p>To guess the next line of a chemistry answer well, a model has to pick up something that works like a grasp of chemistry. Whether to call that "understanding" is one of the rows you will meet below.</p>
+  </div>
+
+  <div class="wide rv" style="margin-top:2rem">
+    <ol class="ladder" aria-label="The three stages of training">
+      <li><span class="k">Stage one</span><b>Read everything</b>The model reads a huge pile of text and learns to predict the next word. This gives it knowledge, but no manners. It will happily continue any text, good or vile.<a class="ref" data-src="gpt3"></a></li>
+      <li><span class="k">Stage two</span><b>Learn what people like</b>People rate its answers. The model is nudged towards the ones they prefer: helpful, polite, honest-sounding. This is how a text predictor becomes an assistant.<a class="ref" data-src="instructgpt"></a></li>
+      <li><span class="k">Stage three</span><b>Practise on tasks</b>The model attempts tasks a computer can mark, such as maths, code or a hacking exercise, and is rewarded when it succeeds. This is <b>reinforcement learning</b>. It produced the "reasoning" models of 2024 and 2025,<a class="ref" data-src="o1"></a><a class="ref" data-src="deepseek-r1"></a> and it is the stage where this summer's trouble began.</li>
+    </ol>
+  </div>
+
+  <div class="prose">
+    <h3>Three facts the whole row rests on</h3>
+    <p><mark>These systems are grown, not built.</mark> Nobody designed their behaviour line by line. It emerged from training, and it sometimes surprises the people who did the training.</p>
+    <p><mark>Nobody can fully read them.</mark> Every number inside the model is there to inspect, but what the numbers are doing is mostly opaque. Researchers can now trace small parts of a model's working, and what they find does not always match the model's own account of its reasoning.<a class="ref" data-src="tracing-thoughts"></a></p>
+    <p><mark>So far, bigger has meant better.</mark> The computing power used to train the largest models has grown about five times a year since 2020.<a class="ref" data-src="epoch-compute"></a> Whether that carries on is a real dispute, and much of what follows turns on it.</p>
+  </div>
+</section>
+
+<!-- ============================================================== AGENTS -->
+<section class="chapter wrap" id="agents">
+  <div class="prose">
+    <p class="eyebrow">Part two</p>
+    <h2>From talking to doing</h2>
+    <p class="lede">A chatbot answers, and you decide what to do. An <b>agent</b> is the same kind of model given tools, such as a browser, a code editor or a company login, and told to get on with it.</p>
+    <p>It works in a loop: think, act, look at what happened, think again. It can go round that loop hundreds of times without a person checking.</p>
+  </div>
+
+  <figure class="plate rv" id="loop" aria-labelledby="loop-title">
+    <div class="plate__head"><span class="plate__no">Plate 2</span><h3 class="plate__title" id="loop-title">How an agent works</h3></div>
+    <div class="plate__body loop">
+      <svg class="loop__svg" viewBox="0 0 320 320" role="img" aria-label="A loop of three steps: think, act, look, circling a goal">
+        <circle class="loop__ring" cx="160" cy="160" r="105"/>
+        <g class="loop__node" id="ln-think"><circle cx="160" cy="55" r="36"/><text x="160" y="59" text-anchor="middle">Think</text></g>
+        <g class="loop__node" id="ln-act"><circle cx="250.9" cy="212.5" r="36"/><text x="250.9" y="216.5" text-anchor="middle">Act</text></g>
+        <g class="loop__node" id="ln-look"><circle cx="69.1" cy="212.5" r="36"/><text x="69.1" y="216.5" text-anchor="middle">Look</text></g>
+        <text x="160" y="156" text-anchor="middle" style="font-size:10px">The goal</text>
+        <text x="160" y="172" text-anchor="middle" style="font-size:10px">a person set</text>
+        <circle class="loop__runner" id="loop-runner" cx="160" cy="55" r="7"/>
+      </svg>
+      <div>
+        <p class="loop__goal"><span>The goal</span><span id="loop-goal"></span></p>
+        <ol class="log" id="loop-log" aria-live="polite"></ol>
+        <div class="loop__controls">
+          <button class="btn" id="loop-next" type="button">Next step</button>
+          <button class="btn btn--ghost" id="loop-play" type="button">Play</button>
+          <button class="btn btn--ghost" id="loop-reset" type="button">Reset</button>
+        </div>
+      </div>
+    </div>
+    <figcaption class="plate__cap"><strong>Why it matters</strong> The length of task an agent can finish on its own doubled about every seven months over the past six years, by one widely cited measure,<a class="ref" data-src="metr-horizons"></a> and nearer every four months lately.<a class="ref" data-src="metr-th11"></a> An agent that can work alone for hours is more useful, and harder to supervise.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>The trouble with rewards</h3>
+    <p>Stage three of training rewards success. But a computer can only reward what it can measure, and what you measure is never quite what you mean.</p>
+    <p>The classic case is a boat. In 2016 OpenAI trained a system to play a racing game called CoastRunners, rewarding it for points. It found a lagoon where three targets kept reappearing, and circled there for ever, crashing and catching fire, never finishing the race, and outscoring human players by about a fifth.<a class="ref" data-src="coastrunners"></a></p>
+  </div>
+
+  <figure class="plate rv" id="boat" aria-labelledby="boat-title">
+    <div class="plate__head"><span class="plate__no">Plate 3</span><h3 class="plate__title" id="boat-title">The boat that would not race</h3></div>
+    <div class="plate__body boat">
+      <svg class="boat__svg" id="boat-svg" viewBox="0 0 520 360" role="img" aria-label="A boat on a race course. In one mode it follows the course to the finish. In the other it circles three targets for ever.">
+        <path class="boat__land" d="M150 160c0-40 50-62 105-60s110 22 108 64-52 58-108 56-105-20-105-60z"/>
+        <path class="boat__course" id="boat-course" d="M62 300C34 210 44 92 150 64S380 38 452 92s36 150-46 206"/>
+        <path id="boat-entry" d="M62 300C110 312 170 312 222 300" fill="none"/>
+        <path id="boat-circle" d="M222 300a28 28 0 1 1 56 0a28 28 0 1 1-56 0" fill="none"/>
+        <circle cx="250" cy="300" r="28" fill="none" stroke="var(--rule)" stroke-dasharray="2 5"/>
+        <g id="boat-marks"></g>
+        <circle class="boat__target" cx="250" cy="272" r="7"/>
+        <circle class="boat__target" cx="274.2" cy="314" r="7"/>
+        <circle class="boat__target" cx="225.8" cy="314" r="7"/>
+        <line class="boat__finish" x1="388" y1="284" x2="426" y2="312"/>
+        <text class="boat__lbl" x="40" y="330">Start</text>
+        <text class="boat__lbl" x="416" y="334">Finish</text>
+        <text class="boat__lbl" x="250" y="350" text-anchor="middle">Lagoon: targets reappear</text>
+        <g id="boat-hull"><path class="boat__hull" d="M-10-6L5-6L13 0L5 6L-10 6Z"/></g>
+      </svg>
+      <div>
+        <div class="seg" id="boat-mode" role="group" aria-label="Which boat to watch">
+          <button type="button" data-m="meant" aria-pressed="true">What we meant</button>
+          <button type="button" data-m="got" aria-pressed="false">What we got</button>
+        </div>
+        <div class="boat__read">
+          <div class="read"><span class="k">Points</span><span class="v" id="boat-score">0</span></div>
+          <div class="read"><span class="k">Race finished</span><span class="v" id="boat-prog">0%</span></div>
+        </div>
+        <p class="boat__say" id="boat-say" aria-live="polite"></p>
+      </div>
+    </div>
+    <figcaption class="plate__cap"><strong>The name for this</strong> Researchers call it <b>reward hacking</b> or specification gaming. The system did exactly what it was rewarded for. There is a long list of examples.<a class="ref" data-src="specgaming"></a> A boat going in circles is funny. The same habit in an agent with a company login is not.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ INCIDENT -->
+<section class="chapter wrap" id="incident" data-scan="incident kd">
+  <div class="prose" id="incident-intro"></div>
+
+  <figure class="plate rv" id="steps" aria-labelledby="steps-title" tabindex="-1">
+    <div class="plate__head"><span class="plate__no">Plate 4</span><h3 class="plate__title" id="steps-title">The Hugging Face incident, step by step</h3></div>
+    <div class="plate__body steps">
+      <div>
+        <svg class="steps__svg" id="steps-svg" viewBox="0 0 460 250" role="img" aria-label="Diagram: a test sandbox at OpenAI on the left, the open internet in the middle, Hugging Face on the right. Dots show where the AI agents are at each step.">
+          <rect class="zone is-box" data-z="box" x="10" y="40" width="130" height="170" rx="6"/>
+          <text x="75" y="28" text-anchor="middle">OpenAI test sandbox</text>
+          <rect class="zone" data-z="net" x="165" y="58" width="120" height="134" rx="60"/>
+          <text x="225" y="46" text-anchor="middle">Open internet</text>
+          <rect class="zone" data-z="hf" x="310" y="40" width="140" height="170" rx="6"/>
+          <text x="380" y="28" text-anchor="middle">Hugging Face</text>
+          <g id="steps-board" style="opacity:0;transition:opacity .6s">
+            <rect x="196" y="140" width="58" height="34" rx="3" fill="var(--amber-soft)" stroke="var(--amber)" stroke-width="1.5"/>
+            <path d="M203 150h44M203 157h36M203 164h40" stroke="var(--amber)" stroke-width="1.5" fill="none"/>
+            <text x="225" y="188" text-anchor="middle" style="font-size:8.5px">Message board</text>
+          </g>
+          <path class="link" data-l="out" d="M140 120C152 112 158 110 170 112"/>
+          <path class="link" data-l="in" d="M284 118C296 112 300 112 312 118"/>
+          <g>
+            <circle class="agent" cx="50" cy="100" r="6"/><circle class="agent" cx="78" cy="92" r="6"/>
+            <circle class="agent" cx="100" cy="112" r="6"/><circle class="agent" cx="60" cy="130" r="6"/>
+            <circle class="agent" cx="88" cy="140" r="6"/><circle class="agent" cx="46" cy="158" r="6"/>
+            <circle class="agent" cx="74" cy="166" r="6"/><circle class="agent" cx="104" cy="160" r="6"/>
+          </g>
+          <text x="75" y="228" text-anchor="middle" style="font-size:9px">Each dot stands for many agents</text>
+        </svg>
+      </div>
+      <div>
+        <div class="steps__dots" id="steps-dots" role="group" aria-label="Steps"></div>
+        <div class="steps__panel" id="steps-panel" aria-live="polite"></div>
+        <div class="steps__nav">
+          <button class="btn btn--ghost" id="steps-prev" type="button">Back</button>
+          <button class="btn" id="steps-next" type="button">Next</button>
+          <span class="steps__count" id="steps-count"></span>
+        </div>
+      </div>
+    </div>
+    <figcaption class="plate__cap" id="steps-cap"></figcaption>
+  </figure>
+
+  <div class="wide rv"><div class="kd" id="kd"></div></div>
+  <div class="prose" id="incident-outro" style="margin-top:2.2rem"></div>
+</section>
+
+<!-- =============================================================== SINCE -->
+<section class="chapter wrap" id="since" data-scan="timeline">
+  <div class="prose" id="since-intro"></div>
+  <div class="prose rv" style="margin-top:1.6rem">
+    <div class="filters" id="tl-filters" role="group" aria-label="Filter the timeline"></div>
+    <ol class="tl" id="tl"></ol>
+  </div>
+</section>
+
+<!-- ============================================================ ARGUMENT -->
+<section class="chapter wrap" id="argument" data-scan="chain odds">
+  <div class="prose">
+    <p class="eyebrow">Part five</p>
+    <h2>Why anyone thinks this ends badly</h2>
+    <p class="lede">The case that AI could end humanity is not one claim. It is a chain of five, and each has to hold for the conclusion to follow.</p>
+    <p>This is the most useful thing to grasp about the whole row. The camps are not shouting at random. Each one attacks a different link. Press a link to see who disputes it.</p>
+  </div>
+
+  <figure class="plate rv" aria-labelledby="chain-title">
+    <div class="plate__head"><span class="plate__no">Plate 5</span><h3 class="plate__title" id="chain-title">The argument, link by link</h3></div>
+    <div class="plate__body">
+      <ol class="chain" id="chain"></ol>
+      <div class="chain__panel" id="chain-panel" aria-live="polite"></div>
+    </div>
+    <figcaption class="plate__cap"><strong>A fair test</strong> If someone is sure of doom, ask which links they have evidence for. If someone is sure of safety, ask which link they think breaks, and why.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <h3>So what are the odds?</h3>
+    <p>People in this debate put numbers on their fear. The jargon is <b>p(doom)</b>: the probability of catastrophe. Treat every figure below as a mood with a decimal point. Nobody has a method for working these out, the definitions of "doom" differ, and the people most willing to give a number are not a fair sample.</p>
+  </div>
+
+  <figure class="plate rv" aria-labelledby="odds-title">
+    <div class="plate__head"><span class="plate__no">Plate 6</span><h3 class="plate__title" id="odds-title">Published guesses at the chance of catastrophe</h3></div>
+    <div class="plate__body"><div class="odds" id="odds"></div></div>
+    <figcaption class="plate__cap" id="odds-cap"></figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ FACTIONS -->
+<section class="chapter wrap" id="factions" data-scan="camps">
+  <div class="prose">
+    <p class="eyebrow">Part six</p>
+    <h2>A field guide to the factions</h2>
+    <p class="lede">The labels people throw at each other, such as doomer, booster, decel or grifter, tell you little. Two questions sort almost everyone.</p>
+    <p><b>How powerful will AI get, and how soon?</b> And: <b>how far should we hold it back?</b> The map below plots the main voices on those two lines. Where we place people is our reading of what they have published. People move, and several would dispute their spot.</p>
+  </div>
+
+  <figure class="plate rv" aria-labelledby="map-title">
+    <div class="plate__head"><span class="plate__no">Plate 7</span><h3 class="plate__title" id="map-title">Who stands where</h3></div>
+    <div class="plate__body">
+      <div class="filters" id="map-filters" role="group" aria-label="Show one camp" style="margin-bottom:1rem"></div>
+      <div class="mapwrap">
+        <div>
+          <div class="map" id="map">
+            <svg viewBox="0 0 1000 800" preserveAspectRatio="none" aria-hidden="true">
+              <g class="grid"><path d="M250 0V800M750 0V800M0 200H1000M0 600H1000" fill="none"/></g>
+              <path class="axis" d="M500 0V800M0 400H1000" fill="none"/>
+              <g id="map-terr"></g>
+            </svg>
+            <span class="map__ax map__ax--t">Stop or slow it</span>
+            <span class="map__ax map__ax--b">Let it run</span>
+            <span class="map__ax map__ax--l">AI stays limited</span>
+            <span class="map__ax map__ax--r">Superhuman AI, soon</span>
+          </div>
+          <p class="map__note">Dots are people or groups. Shaded areas show the range of each camp. Press a dot, or choose a name: <label class="vh" for="map-select">Choose a person</label><select id="map-select" style="font:inherit;font-size:.9rem;padding:.45rem .5rem;min-height:40px;max-width:100%;border:1px solid var(--rule);border-radius:4px;background:var(--paper);color:var(--ink)"><option value="">Pick a name</option></select></p>
+        </div>
+        <div class="mapcard" id="mapcard" aria-live="polite">
+          <p class="mapcard__empty">Press any dot to see who it is, what they argue, what they have said since July, and why we put them there.</p>
+        </div>
+      </div>
+    </div>
+    <figcaption class="plate__cap"><strong>Health warning</strong> A two-line map flattens real people. It leaves out a third question that matters as much: who should hold the power, companies, governments or everyone. The plates below pick that up.</figcaption>
+  </figure>
+
+  <div class="camps rv" id="camps"></div>
+  <div class="prose" id="money-note" style="margin-top:2.6rem"></div>
+</section>
+
+<!-- ================================================================ QUIZ -->
+<section class="chapter wrap" id="spot" data-scan="quiz">
+  <div class="prose">
+    <p class="eyebrow">A short test</p>
+    <h2>Spot the faction</h2>
+    <p>Eight invented posts, written in the style of each camp. None is a real quote. See if you can tell who is talking. It is the skill this page exists to teach.</p>
+  </div>
+  <figure class="plate rv" aria-label="Quiz">
+    <div class="plate__body">
+      <div class="quiz" id="quiz">
+        <div class="quiz__bar"><span id="quiz-prog"></span><span id="quiz-score"></span></div>
+        <p class="quiz__post" id="quiz-post"></p>
+        <div class="quiz__opts" id="quiz-opts"></div>
+        <p class="quiz__fb" id="quiz-fb" aria-live="polite"></p>
+        <button class="btn" id="quiz-next" type="button" hidden>Next post</button>
+      </div>
+    </div>
+  </figure>
+</section>
+
+<!-- ============================================================ EVIDENCE -->
+<section class="chapter wrap" id="evidence" data-scan="ledger">
+  <div class="prose">
+    <p class="eyebrow">Part seven</p>
+    <h2>The evidence, both ways</h2>
+    <p class="lede">Most of what worries researchers comes from laboratory tests, many of them set up to tempt a model into bad behaviour. That is a fair way to find faults, and a poor guide to how often they happen in ordinary use. Until this summer, that was nearly all there was.</p>
+  </div>
+  <div class="wide rv" style="margin-top:2rem">
+    <div class="ledger">
+      <div style="--lc: var(--c-worried)"><h3>Findings that worry people</h3><ul id="ledger-worry"></ul></div>
+      <div style="--lc: var(--c-normal)"><h3>Findings that cool things down</h3><ul id="ledger-calm"></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================= GOVERNMENTS -->
+<section class="chapter wrap" id="governments" data-scan="gov">
+  <div class="prose">
+    <p class="eyebrow">Part eight</p>
+    <h2>What governments are doing</h2>
+    <p class="lede" id="gov-lede"></p>
+  </div>
+  <div class="gov rv" id="gov"></div>
+</section>
+
+<!-- =============================================================== WORDS -->
+<section class="chapter wrap" id="words" data-scan="glossary">
+  <div class="wide">
+    <p class="eyebrow">Look it up</p>
+    <h2>Words you will meet</h2>
+    <div class="gloss__search">
+      <label class="vh" for="gloss-q">Search the jargon</label>
+      <input id="gloss-q" type="search" placeholder="Search the jargon, e.g. alignment" autocomplete="off">
+      <span class="gloss__count" id="gloss-count" aria-live="polite"></span>
+    </div>
+    <dl class="gloss" id="gloss"></dl>
+  </div>
+</section>
+
+<!-- =========================================================== QUESTIONS -->
+<section class="chapter wrap" id="questions">
+  <div class="prose">
+    <p class="eyebrow">Take this with you</p>
+    <h2>Five questions for the next row</h2>
+    <p class="lede">There will be another incident, another letter and another pile-on. You will not have time to research each one. These five questions do most of the work.</p>
+  </div>
+  <ol class="qs rv" id="qs"></ol>
+</section>
+
+<!-- ============================================================= SOURCES -->
+<section class="chapter wrap" id="sources">
+  <div class="wide">
+    <p class="eyebrow">Check our work</p>
+    <h2>Sources</h2>
+    <p style="max-width:var(--measure)">Numbered in the order they appear. Where we could, we link to the original paper, post or document, not a report about it. Some news sources are behind paywalls.</p>
+    <ul class="src-key"><li><span class="chk chk--read">Read in full</span> during research on 21 September 2026</li><li><span class="chk chk--seen">Paywalled or blocked</span> to us, so cited from its headline and from other reports we did read</li><li><span class="chk chk--ref">Reference</span> a standing document linked for you to read</li></ul>
+    <ol class="sources" id="sources-list"></ol>
+  </div>
+</section>
+
+</main>
+
+<!-- =============================================================== ABOUT -->
+<section class="about wrap" id="about">
+  <div class="prose" id="about-body"></div>
+</section>
+
+<footer class="foot">AI risk field guide. Correct as of <span data-asof>21 September 2026</span>. Corrections welcome.</footer>
+
+<noscript><p style="padding:2rem;max-width:40rem;margin:auto">This guide uses JavaScript to draw its diagrams, the map of factions and the source list. With it switched off you can still read the main text above.</p></noscript>
+
+<script src="js/data.js"></script>
+<script src="js/content.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
