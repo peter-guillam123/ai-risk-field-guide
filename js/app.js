@@ -775,15 +775,17 @@
       opts.innerHTML = ''; fb.innerHTML = ''; nextB.hidden = true;
       prog.textContent = 'Post ' + (i + 1) + ' of ' + Q.length;
       scoreEl.textContent = score + ' right';
-      q.options.forEach(function (id) {
+      // shuffle, or the right answer is always the first button
+      var order = q.options.slice().sort(function () { return Math.random() - 0.5; });
+      order.forEach(function (id) {
         var c = campById(id) || {};
-        var b = h('button', { class: 'quiz__opt', type: 'button', style: '--camp: var(--c-' + id + ')', text: c.short || c.name });
+        var b = h('button', { class: 'quiz__opt', type: 'button', style: '--camp: var(--c-' + id + ')', text: c.short || c.name, 'data-camp': id });
         b.addEventListener('click', function () {
           $$('button', opts).forEach(function (x) { x.disabled = true; });
           var right = id === q.answer;
           if (right) score++;
           b.classList.add(right ? 'is-right' : 'is-wrong');
-          $$('button', opts).forEach(function (x, k) { if (q.options[k] === q.answer) x.classList.add('is-right'); });
+          $$('button', opts).forEach(function (x) { if (x.dataset.camp === q.answer) x.classList.add('is-right'); });
           fb.innerHTML = '<b>' + (right ? 'Yes. ' : 'Not quite. ') + '</b>' + rich(q.why);
           paintRefs(fb);
           scoreEl.textContent = score + ' right';
