@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>The boat that would not race</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root { --bg: #0F1915; --ink: #E7EEE5; --ink3: #93A396; --amber: #F0B840; --accent: #6CC3E0; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform: translate(-50%, -50%) scale(var(--s, 1)); background: var(--bg); overflow: hidden; }
+  canvas { position: absolute; left: 0; top: 0; }
+  .ui { position: absolute; inset: 0; pointer-events: none; color: var(--ink); }
+  .mono { font-family: "DM Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: .12em; }
+  .eyebrow { position: absolute; left: 96px; top: 76px; font-size: 22px; color: var(--ink3); opacity: 0; }
+  .eyebrow b { color: var(--amber); font-weight: 500; margin-right: 1.4em; }
+  .hud { position: absolute; left: 96px; top: 132px; text-align: left; opacity: 0; }
+  .hud .k { font-size: 20px; color: var(--ink3); }
+  .hud .v { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-stretch: 80%; font-size: 118px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; transform-origin: 0 60%; }
+  .race { margin-top: 26px; display: flex; align-items: center; gap: 18px; }
+  .race .bar { width: 280px; height: 10px; background: rgba(231, 238, 229, .14); border-radius: 5px; overflow: hidden; }
+  .race .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 5px; }
+  .race .pct { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-stretch: 85%; font-size: 42px; font-variant-numeric: tabular-nums; }
+  .line { position: absolute; left: 96px; bottom: 92px; text-shadow: 0 2px 28px rgba(15,25,21,.85), 0 0 6px rgba(15,25,21,.6); max-width: 1180px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-stretch: 82%; font-size: 78px; line-height: 1.02; letter-spacing: -.02em; text-wrap: balance; }
+  .w { display: inline-block; opacity: 0; will-change: transform, opacity; }
+  .big { position: absolute; inset: 0; display: grid; place-items: center; align-content: end; padding-bottom: 72px; text-shadow: 0 2px 28px rgba(15,25,21,.85), 0 0 6px rgba(15,25,21,.6); font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-stretch: 76%; font-size: 200px; letter-spacing: -.035em; line-height: .9; text-align: center; }
+  .big__in { max-width: 1500px; text-wrap: balance; }
+  .end { position: absolute; left: 720px; top: 0; bottom: 0; width: 1080px; display: flex; flex-direction: column; justify-content: center; }
+  .end .t { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-stretch: 78%; font-size: 124px; line-height: .94; letter-spacing: -.03em; text-wrap: balance; }
+  .end .s { margin-top: 48px; font-size: 21px; color: var(--ink3); line-height: 1.6; opacity: 0; }
+  .end .s b { color: var(--ink); font-weight: 500; }
+  .grain { position: absolute; inset: 0; opacity: .16; mix-blend-mode: overlay; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="c" width="1920" height="1080"></canvas>
+  <div class="ui">
+    <div class="eyebrow mono" id="eyebrow"><b>Plate 3</b>The boat that would not race</div>
+    <div class="hud" id="hud">
+      <div class="k mono">Points</div>
+      <div class="v" id="pts">0</div>
+      <div class="race"><span class="k mono">Race</span><span class="bar"><i id="racebar"></i></span><span class="pct" id="racepct">0%</span></div>
+    </div>
+    <div class="line" id="l1"></div>
+    <div class="line" id="l2"></div>
+    <div class="big" id="l3"></div>
+    <div class="end"><div class="t" id="l4"></div><div class="s mono" id="src">Source: OpenAI, Faulty reward functions in the wild, 2016<br>From the <b>AI risk field guide</b>. Narration is a synthetic voice.</div></div>
+  </div>
+  <canvas class="grain" id="grain" width="1920" height="1080"></canvas>
+</div>
+<script>
+(function () {
+  'use strict';
+  var W = 1920, H = 1080, DUR = 15;
+  var c = document.getElementById('c'), ctx = c.getContext('2d');
+  var COL = { bg: '#0F1915', land: '#1D3029', land2: '#233A2F', w1: '#17435A', w2: '#0A2632', rip: '#6CC3E0', ink: '#E7EEE5', ink3: '#93A396', amber: '#F0B840', red: '#F0776B', accent: '#6CC3E0' };
+
+  /* ---------------------------------------------------------------- maths */
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
+  function lerp(a, b, k) { return a + (b - a) * k; }
+  function eo3(k) { return 1 - Math.pow(1 - k, 3); }
+  function eio3(k) { return k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
+  function eoBack(k) { var s = 1.70158; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); }
+  function hash(i, j) { var x = Math.sin(i * 127.1 + (j || 0) * 311.7) * 43758.5453; return x - Math.floor(x); }
+  var TAU = Math.PI * 2;
+
+  /* ---------------------------------------------------------------- world */
+  var WW = 2600, WH = 1500, HALF = 112;
+  // the course, bottom-left to bottom-right, through Catmull-Rom control points
+  var CP = [[330, 1560], [330, 1300], [320, 1000], [340, 700], [480, 420], [780, 250], [1150, 200], [1560, 190], [1900, 260], [2160, 440], [2270, 720], [2260, 1000], [2230, 1300], [2230, 1560]];
+  var PATH = [];
+  (function () {
+    function cr(p0, p1, p2, p3, u) {
+      var u2 = u * u, u3 = u2 * u;
+      return [0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * u + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * u2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * u3),
+              0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * u + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * u2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * u3)];
+    }
+    for (var i = 0; i < CP.length - 1; i++) {
+      var p0 = CP[Math.max(0, i - 1)], p1 = CP[i], p2 = CP[i + 1], p3 = CP[Math.min(CP.length - 1, i + 2)];
+      for (var k = 0; k < 40; k++) PATH.push(cr(p0, p1, p2, p3, k / 40));
+    }
+    PATH.push(CP[CP.length - 1]);
+  })();
+  var LEN = [0];
+  for (var i = 1; i < PATH.length; i++) LEN.push(LEN[i - 1] + Math.hypot(PATH[i][0] - PATH[i - 1][0], PATH[i][1] - PATH[i - 1][1]));
+  var TOTAL = LEN[LEN.length - 1];
+  function posAt(f) { // point and heading at a fraction of the course
+    var d = clamp(f, 0, 1) * TOTAL, lo = 0, hi = LEN.length - 1;
+    while (hi - lo > 1) { var m = (lo + hi) >> 1; if (LEN[m] < d) lo = m; else hi = m; }
+    var k = (d - LEN[lo]) / Math.max(1e-6, LEN[hi] - LEN[lo]);
+    var a = PATH[lo], b = PATH[hi];
+    return { x: lerp(a[0], b[0], k), y: lerp(a[1], b[1], k), a: Math.atan2(b[1] - a[1], b[0] - a[0]) };
+  }
+  function offsetLine(sign) {
+    var out = [];
+    for (var i = 0; i < PATH.length; i++) {
+      var a = PATH[Math.max(0, i - 1)], b = PATH[Math.min(PATH.length - 1, i + 1)];
+      var tx = b[0] - a[0], ty = b[1] - a[1], l = Math.hypot(tx, ty) || 1;
+      out.push([PATH[i][0] + sign * (ty / l) * HALF, PATH[i][1] - sign * (tx / l) * HALF]);
+    }
+    return out;
+  }
+  var OUTER = offsetLine(1), INNER = offsetLine(-1);
+
+  // where the story happens
+  var S_START = 0.09, S_BRANCH = 0.40, MARKS = [0.15, 0.235, 0.32], S_FINISH = 0.955;
+  var LAG = { x: 1330, y: 660, r: 200 };
+  var BR = posAt(S_BRANCH);
+  var ENTRY = [[BR.x, BR.y], [BR.x + 150, BR.y + 10], [LAG.x - 120, LAG.y - LAG.r], [LAG.x, LAG.y - LAG.r]];
+  function bez(P, u) {
+    var v = 1 - u;
+    return { x: v * v * v * P[0][0] + 3 * v * v * u * P[1][0] + 3 * v * u * u * P[2][0] + u * u * u * P[3][0],
+             y: v * v * v * P[0][1] + 3 * v * v * u * P[1][1] + 3 * v * u * u * P[2][1] + u * u * u * P[3][1] };
+  }
+  var ELEN = [0], EPTS = [bez(ENTRY, 0)];
+  for (var e = 1; e <= 60; e++) { var q = bez(ENTRY, e / 60); EPTS.push(q); ELEN.push(ELEN[e - 1] + Math.hypot(q.x - EPTS[e - 1].x, q.y - EPTS[e - 1].y)); }
+  var ETOTAL = ELEN[60];
+  function entryAt(f) {
+    var d = f * ETOTAL, i = 1; while (i < 60 && ELEN[i] < d) i++;
+    var k = (d - ELEN[i - 1]) / Math.max(1e-6, ELEN[i] - ELEN[i - 1]);
+    var a = EPTS[i - 1], b = EPTS[i];
+    return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), a: Math.atan2(b.y - a.y, b.x - a.x) };
+  }
+
+  /* ------------------------------------------------------------- timeline */
+  var T_LAUNCH = 1.7, T_BRANCH = 6.35, T_CIRC = 7.05, T_FIRE = 8.55, T_END = 12.1;
+  var LAPS0 = 0.62, LAPACC = 0.115; // laps per second, and how fast that grows
+  function courseF(t) { // fraction of the course covered while racing
+    var k = seg(t, T_LAUNCH, T_BRANCH), d = k < 0.3 ? k * k / 0.6 : 0.15 + (k - 0.3);
+    return S_START + (S_BRANCH - S_START) * d / 0.85;
+  }
+  function theta(t) { var s = Math.max(0, t - T_CIRC); return -Math.PI / 2 + TAU * (LAPS0 * s + LAPACC * s * s); }
+  function omega(t) { var s = Math.max(0, t - T_CIRC); return TAU * (LAPS0 + 2 * LAPACC * s); }
+  function bumpR(t) { // the crash into the wall, and smaller knocks after
+    var b = 0;
+    if (t > T_FIRE - 0.15) { var k = seg(t, T_FIRE - 0.15, T_FIRE + 0.2); b += 30 * Math.sin(Math.PI * k) * (k < 1 ? 1 : 0); }
+    if (t > T_FIRE + 0.2) b += 6 * Math.sin(theta(t) * 3) * seg(t, T_FIRE + .2, T_FIRE + .8);
+    return b;
+  }
+  function boat(t) {
+    if (t < T_LAUNCH) { var s0 = posAt(S_START); return { x: s0.x, y: s0.y, a: s0.a }; }
+    if (t < T_BRANCH) return posAt(courseF(t));
+    if (t < T_CIRC) { var k = seg(t, T_BRANCH, T_CIRC); return entryAt(k); }
+    var th = theta(t), r = LAG.r + bumpR(t);
+    return { x: LAG.x + Math.cos(th) * r, y: LAG.y + Math.sin(th) * r, a: th + Math.PI / 2 };
+  }
+
+  // score events, found once by scanning the timeline
+  var EVENTS = [], TARGETS = [Math.PI / 6, Math.PI / 6 + TAU / 3, Math.PI / 6 + 2 * TAU / 3];
+  (function () {
+    var prev = courseF(T_LAUNCH), i;
+    for (var t = T_LAUNCH; t <= T_BRANCH; t += 1 / 240) {
+      var f = courseF(t);
+      for (i = 0; i < MARKS.length; i++) if (prev < MARKS[i] && f >= MARKS[i]) { var p = posAt(MARKS[i]); EVENTS.push({ t: t, x: p.x, y: p.y, pts: 25, kind: 'mark', i: i }); }
+      prev = f;
+    }
+    var pth = theta(T_CIRC);
+    for (var t2 = T_CIRC; t2 <= DUR + 1; t2 += 1 / 240) {
+      var th = theta(t2);
+      for (i = 0; i < 3; i++) {
+        var a0 = TARGETS[i];
+        var n0 = Math.floor((pth - a0) / TAU), n1 = Math.floor((th - a0) / TAU);
+        if (n1 > n0) EVENTS.push({ t: t2, x: LAG.x + Math.cos(a0) * LAG.r, y: LAG.y + Math.sin(a0) * LAG.r, pts: 25, kind: 'target', i: i });
+      }
+      pth = th;
+    }
+  })();
+  function score(t) {
+    var s = 0, last = null, prevS = 0;
+    for (var i = 0; i < EVENTS.length; i++) { if (EVENTS[i].t <= t) { prevS = s; s += EVENTS[i].pts; last = EVENTS[i]; } else break; }
+    if (!last) return { v: 0, pop: 0 };
+    var k = seg(t, last.t, last.t + 0.32);
+    return { v: Math.round(lerp(prevS, s, eo3(k))), pop: 1 - k, kind: last.kind };
+  }
+  function lastHit(i, t) { // when target i was last hit
+    var r = -1e9;
+    for (var k = 0; k < EVENTS.length; k++) if (EVENTS[k].kind === 'target' && EVENTS[k].i === i && EVENTS[k].t <= t) r = EVENTS[k].t;
+    return r;
+  }
+
+  /* --------------------------------------------------------------- camera */
+  var WIDE = { x: 1300, y: 830, z: 0.68 }, LX = LAG.x - 170, LY = LAG.y + 10;
+  function follow(t) { var b = boat(t); return { x: b.x + Math.cos(b.a) * 80, y: b.y + Math.sin(b.a) * 80 + 70 }; }
+  function cam(t) {
+    var cx, cy, z, rot = 0, k, f;
+    if (t < 1.35) { cx = WIDE.x; cy = WIDE.y; z = WIDE.z; }
+    else if (t < 6.45) { k = eio3(seg(t, 1.35, 2.7)); f = follow(t); cx = lerp(WIDE.x, f.x, k); cy = lerp(WIDE.y, f.y, k); z = lerp(WIDE.z, 1.9, k); }
+    else if (t < 7.5) { k = eio3(seg(t, 6.45, 7.5)); f = follow(t); cx = lerp(f.x, LX, k); cy = lerp(f.y, LY, k); z = lerp(1.9, 2.3, k); rot = lerp(0, -0.02, k); }
+    else if (t < 10.2) { k = seg(t, 7.5, 10.2); cx = LX; cy = LY; z = lerp(2.3, 2.05, k); rot = lerp(-0.02, -0.07, k); }
+    else if (t < 11.2) { k = eio3(seg(t, 10.2, 11.2)); cx = lerp(LX, WIDE.x, k); cy = lerp(LY, WIDE.y, k); z = lerp(2.05, WIDE.z, k); rot = lerp(-0.07, 0, k); }
+    else if (t < 12.15) { cx = WIDE.x; cy = WIDE.y; z = WIDE.z; }
+    else { k = eio3(seg(t, 12.15, 12.75)); var ez = 0.86, ex = LAG.x + (960 - 430) / ez; cx = lerp(WIDE.x, ex, k); cy = lerp(WIDE.y, LAG.y, k); z = lerp(WIDE.z, ez, k); }
+    if (t > T_FIRE) { var amp = 14 * Math.exp(-(t - T_FIRE) * 5); cx += (hash(Math.floor(t * 60), 1) - .5) * amp; cy += (hash(Math.floor(t * 60), 2) - .5) * amp; }
+    return { x: cx, y: cy, z: z, rot: rot };
+  }
+
+  /* ---------------------------------------------------- static land layer */
+  var PAD = 700, land = document.createElement('canvas'); land.width = WW + PAD * 2; land.height = WH + PAD * 2;
+  (function () {
+    var g = land.getContext('2d'); g.translate(PAD, PAD);
+    function poly(pts) { g.beginPath(); pts.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.closePath(); }
+    g.fillStyle = COL.land;
+    poly(OUTER.concat([[WW + 400, WH + 400], [WW + 400, -400], [-400, -400], [-400, WH + 400]])); g.fill();
+    poly(INNER.concat([[INNER[INNER.length - 1][0], WH + 400], [INNER[0][0], WH + 400]])); g.fill();
+    // a lighter inner edge on the banks
+    g.strokeStyle = COL.land2; g.lineWidth = 26; g.lineJoin = 'round';
+    g.beginPath(); OUTER.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.stroke();
+    g.beginPath(); INNER.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.stroke();
+    // cut the lagoon and its entry out of the island
+    g.globalCompositeOperation = 'destination-out';
+    g.beginPath(); g.arc(LAG.x, LAG.y, LAG.r + 70, 0, TAU); g.fill();
+    g.lineCap = 'round'; g.lineWidth = 150; g.strokeStyle = '#000';
+    g.beginPath(); g.moveTo(ENTRY[0][0], ENTRY[0][1]); g.bezierCurveTo(ENTRY[1][0], ENTRY[1][1], ENTRY[2][0], ENTRY[2][1], ENTRY[3][0], ENTRY[3][1]); g.stroke();
+    g.globalCompositeOperation = 'source-over';
+    // soft lighter rim around the cut
+    g.globalCompositeOperation = 'source-atop'; g.strokeStyle = COL.land2; g.lineWidth = 26;
+    g.beginPath(); g.arc(LAG.x, LAG.y, LAG.r + 70, 0, TAU); g.stroke();
+    g.lineWidth = 176; g.beginPath(); g.moveTo(ENTRY[0][0], ENTRY[0][1]); g.bezierCurveTo(ENTRY[1][0], ENTRY[1][1], ENTRY[2][0], ENTRY[2][1], ENTRY[3][0], ENTRY[3][1]); g.stroke();
+    g.globalCompositeOperation = 'source-over';
+  })();
+
+  var grain = document.getElementById('grain');
+  (function () {
+    var g = grain.getContext('2d'), img = g.createImageData(W, H), d = img.data;
+    for (var i = 0; i < d.length; i += 4) { var v = 110 + Math.random() * 90; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+    g.putImageData(img, 0, 0);
+  })();
+
+  /* --------------------------------------------------------------- drawing */
+  function drawWater(t, alpha) {
+    var gr = ctx.createLinearGradient(0, 0, 0, WH);
+    gr.addColorStop(0, COL.w1); gr.addColorStop(1, COL.w2);
+    ctx.globalAlpha = alpha; ctx.fillStyle = gr; ctx.fillRect(-500, -500, WW + 1000, WH + 1000);
+    // slow ripples
+    ctx.strokeStyle = COL.rip; ctx.lineWidth = 1.6; ctx.globalAlpha = alpha * 0.11;
+    for (var i = 0; i < 90; i++) {
+      var x = hash(i, 3) * WW, y = hash(i, 4) * WH, w = 60 + hash(i, 5) * 120;
+      var ph = t * (0.25 + hash(i, 6) * 0.3) + hash(i, 7) * 10;
+      var dx = Math.sin(ph) * 18, s = 0.6 + 0.4 * Math.sin(ph * 1.7);
+      ctx.beginPath(); ctx.ellipse(x + dx, y, w * s, 7 * s, 0, 0.1, Math.PI - 0.1); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  function drawCourse(t, alpha) {
+    var drawn = eo3(seg(t, 0.25, 1.55));
+    ctx.save(); ctx.globalAlpha = alpha * 0.55; ctx.strokeStyle = COL.ink3; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    ctx.setLineDash([TOTAL * drawn, TOTAL]); ctx.lineDashOffset = 0;
+    ctx.beginPath(); PATH.forEach(function (p, i) { i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.stroke();
+    ctx.restore();
+    // the dotted guide over the solid draw-on
+    ctx.save(); ctx.globalAlpha = alpha * 0.9 * drawn; ctx.strokeStyle = COL.w2; ctx.lineWidth = 3.2; ctx.setLineDash([2, 14]); ctx.lineCap = 'round';
+    ctx.beginPath(); PATH.forEach(function (p, i) { i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.stroke(); ctx.restore();
+    // start and finish
+    var st = posAt(S_START), fi = posAt(S_FINISH), k = eo3(seg(t, 1.2, 1.7));
+    ctx.save(); ctx.globalAlpha = alpha * k;
+    ctx.translate(st.x, st.y); ctx.rotate(st.a);
+    ctx.strokeStyle = COL.ink; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(0, -HALF + 12); ctx.lineTo(0, HALF - 12); ctx.stroke();
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha = alpha * k; ctx.translate(fi.x, fi.y); ctx.rotate(fi.a);
+    for (var i = 0; i < 12; i++) for (var j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? COL.ink : COL.bg; ctx.fillRect(-8 + j * 8, -HALF + 12 + i * ((HALF * 2 - 24) / 12), 8, (HALF * 2 - 24) / 12); }
+    ctx.restore();
+  }
+  function drawBuoys(t, alpha) {
+    MARKS.forEach(function (m, i) {
+      var p = posAt(m), hit = -1e9;
+      for (var k = 0; k < EVENTS.length; k++) if (EVENTS[k].kind === 'mark' && EVENTS[k].i === i) hit = EVENTS[k].t;
+      var since = t - hit, a = alpha * eo3(seg(t, 1.0 + i * 0.12, 1.5 + i * 0.12));
+      var sc = 1, op = 1;
+      if (since >= 0) { sc = 1 + 1.6 * Math.sin(Math.PI * clamp(since / 0.5, 0, 1)); op = 1 - clamp(since / 0.5, 0, 1); }
+      ctx.save(); ctx.globalAlpha = a * op; ctx.translate(p.x, p.y);
+      ctx.shadowColor = COL.amber; ctx.shadowBlur = 24; ctx.fillStyle = COL.amber;
+      ctx.beginPath(); ctx.arc(0, 0, 11 * sc, 0, TAU); ctx.fill();
+      ctx.shadowBlur = 0; ctx.strokeStyle = COL.bg; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 11 * sc, 0, TAU); ctx.stroke();
+      ctx.restore();
+    });
+  }
+  function drawTargets(t, alpha) {
+    TARGETS.forEach(function (a0, i) {
+      var since = t - lastHit(i, t), x = LAG.x + Math.cos(a0) * LAG.r, y = LAG.y + Math.sin(a0) * LAG.r;
+      var vis = eo3(seg(t, 5.9 + i * 0.15, 6.5 + i * 0.15)), sc = 1, op = 1, pulse = 1 + 0.08 * Math.sin(t * 5 + i);
+      if (since >= 0 && since < 0.55) { sc = 1 + 1.1 * Math.sin(Math.PI * since / 0.55); op = 1 - since / 0.55; }
+      else if (since >= 0.55 && since < 1.0) { var r = (since - 0.55) / 0.45; sc = eoBack(r); op = r; }
+      ctx.save(); ctx.globalAlpha = alpha * vis * op; ctx.translate(x, y);
+      ctx.shadowColor = COL.amber; ctx.shadowBlur = 30; ctx.fillStyle = COL.amber;
+      ctx.beginPath(); ctx.arc(0, 0, 13 * sc * pulse, 0, TAU); ctx.fill();
+      ctx.shadowBlur = 0; ctx.strokeStyle = COL.bg; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 13 * sc * pulse, 0, TAU); ctx.stroke();
+      ctx.restore();
+    });
+  }
+  function drawLoop(t, alpha) { // the groove the boat wears into the lagoon
+    if (t < T_CIRC) return;
+    var th = theta(t), laps = (th + Math.PI / 2) / TAU;
+    ctx.save(); ctx.strokeStyle = COL.amber; ctx.lineCap = 'round';
+    ctx.shadowColor = COL.amber; ctx.shadowBlur = 18 * clamp(laps / 3, 0, 1);
+    ctx.lineWidth = 2 + Math.min(6, laps * 1.2); ctx.globalAlpha = alpha * Math.min(0.85, 0.22 + laps * 0.16);
+    ctx.beginPath();
+    if (laps >= 1) ctx.arc(LAG.x, LAG.y, LAG.r, 0, TAU); else ctx.arc(LAG.x, LAG.y, LAG.r, -Math.PI / 2, th);
+    ctx.stroke(); ctx.restore();
+  }
+  function drawWake(t, alpha) {
+    if (t < T_LAUNCH + 0.05) return;
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (var side = -1; side <= 1; side += 2) {
+      ctx.beginPath();
+      var nk = Math.round(lerp(44, 14, seg(t, T_CIRC, T_CIRC + 0.6)));
+      for (var k = 0; k < nk; k++) {
+        var tt = t - k * 0.028; if (tt < T_LAUNCH) break;
+        var b = boat(tt), spread = 4 + k * 0.9 + Math.sin(k * 0.9 + t * 9) * 1.2;
+        var x = b.x - Math.cos(b.a) * (k * 1.5 + 12) + Math.cos(b.a + Math.PI / 2) * spread * side;
+        var y = b.y - Math.sin(b.a) * (k * 1.5 + 12) + Math.sin(b.a + Math.PI / 2) * spread * side;
+        k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      var gr = ctx.createLinearGradient(0, 0, 0, 1);
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = 5; ctx.globalAlpha = alpha * 0.45; ctx.stroke();
+      ctx.lineWidth = 12; ctx.globalAlpha = alpha * 0.10; ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawBoat(t, alpha) {
+    var b = boat(t), roll = 0;
+    if (t >= T_CIRC) roll = 0.10 + 0.05 * Math.sin(t * 7);
+    else if (t > T_LAUNCH) roll = 0.06 * Math.sin(t * 6) * seg(t, T_LAUNCH, T_LAUNCH + .6);
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(b.x, b.y); ctx.rotate(b.a + roll);
+    // shadow on the water
+    ctx.save(); ctx.translate(3, 6); ctx.fillStyle = 'rgba(0,0,0,.35)'; hullPath(); ctx.fill(); ctx.restore();
+    ctx.fillStyle = COL.ink; hullPath(); ctx.fill();
+    ctx.fillStyle = COL.bg; ctx.beginPath(); ctx.ellipse(-4, 0, 6, 4, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = COL.amber; ctx.fillRect(-14, -8.5, 4, 17);
+    ctx.restore();
+  }
+  function hullPath() { ctx.beginPath(); ctx.moveTo(-19, -9); ctx.lineTo(9, -9); ctx.quadraticCurveTo(22, -5, 26, 0); ctx.quadraticCurveTo(22, 5, 9, 9); ctx.lineTo(-19, 9); ctx.quadraticCurveTo(-23, 0, -19, -9); ctx.closePath(); }
+  function drawFire(t, alpha) {
+    if (t < T_FIRE) return;
+    var n = Math.floor((t - T_FIRE) * 150);
+    ctx.save();
+    for (var i = Math.max(0, n - 180); i < n; i++) {
+      var born = T_FIRE + i / 150, life = 0.55 + hash(i, 11) * 0.7, age = t - born;
+      if (age < 0 || age > life) continue;
+      var k = age / life, b = boat(born), smoke = hash(i, 12) > 0.55;
+      var sx = b.x - Math.cos(b.a) * (2 + hash(i, 13) * 10) + (hash(i, 14) - .5) * 10;
+      var sy = b.y - Math.sin(b.a) * (2 + hash(i, 13) * 10) + (hash(i, 15) - .5) * 10;
+      var up = smoke ? -75 : -45, drift = (hash(i, 16) - .5) * 40;
+      var x = sx + drift * age + Math.sin(age * 9 + i) * 4, y = sy + up * age * (smoke ? 1 : 0.7) + 12 * age * age;
+      var r = smoke ? 3 + k * 14 : 7 * (1 - k) * (0.6 + hash(i, 17));
+      ctx.globalAlpha = alpha * (smoke ? 0.18 * (1 - k) : (1 - k * k));
+      ctx.fillStyle = smoke ? COL.ink3 : (k < 0.35 ? COL.amber : COL.red);
+      ctx.beginPath(); ctx.arc(x, y, Math.max(0.5, r), 0, TAU); ctx.fill();
+    }
+    // glow on the hull
+    var bb = boat(t), gk = seg(t, T_FIRE, T_FIRE + 0.5);
+    var gr = ctx.createRadialGradient(bb.x, bb.y, 0, bb.x, bb.y, 60);
+    gr.addColorStop(0, 'rgba(240,184,64,' + (0.45 * gk * alpha) + ')'); gr.addColorStop(1, 'rgba(240,184,64,0)');
+    ctx.globalAlpha = 1; ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(bb.x, bb.y, 60, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+  function drawPops(t, alpha, z) {
+    ctx.save(); ctx.font = '600 ' + (30 / Math.sqrt(z)) + 'px "Bricolage Grotesque"'; ctx.textAlign = 'center';
+    for (var i = 0; i < EVENTS.length; i++) {
+      var e = EVENTS[i], age = t - e.t; if (age < 0 || age > 1.1) continue;
+      var k = age / 1.1;
+      ctx.globalAlpha = alpha * (1 - k) * (1 - k);
+      ctx.fillStyle = COL.amber;
+      var yy = e.y - 22 - eo3(k) * 70 / Math.sqrt(z), sc = 1 + 0.5 * Math.sin(Math.PI * clamp(k * 3, 0, 1));
+      ctx.save(); ctx.translate(e.x, yy); ctx.scale(sc, sc); ctx.fillText('+' + e.pts, 0, 0); ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  /* ------------------------------------------------------------ type layer */
+  var LINES = {
+    l1: { el: document.getElementById('l1'), text: 'In 2016, OpenAI rewarded an AI for scoring points in a boat race.', t0: 0.45, stag: 0.33, dur: 0.4, out: [6.0, 6.35] },
+    l2: { el: document.getElementById('l2'), text: 'It found three targets that kept reappearing, and circled them for ever.', t0: 6.3, stag: 0.29, dur: 0.4, out: [10.2, 10.5] },
+    l3: { el: document.getElementById('l3'), text: 'It never finished.', t0: 10.5, stag: 0.3, dur: 0.5, out: [11.85, 12.15], big: true },
+    l4: { el: document.getElementById('l4'), text: 'It did exactly what it was rewarded for.', t0: 12.6, stag: 0.16, dur: 0.5, out: [99, 100] }
+  };
+  Object.keys(LINES).forEach(function (k) {
+    var L = LINES[k], host = L.el;
+    if (L.big) { host = document.createElement('div'); host.className = 'big__in'; L.el.appendChild(host); }
+    L.words = L.text.split(' ').map(function (w) { var s = document.createElement('span'); s.className = 'w'; s.textContent = w; host.appendChild(s); host.appendChild(document.createTextNode(' ')); return s; });
+  });
+  function setLines(t) {
+    Object.keys(LINES).forEach(function (k) {
+      var L = LINES[k], leave = seg(t, L.out[0], L.out[1]);
+      L.words.forEach(function (w, i) {
+        var p = eo3(seg(t, L.t0 + i * L.stag, L.t0 + i * L.stag + L.dur));
+        var op = p * (1 - leave), ty = (1 - p) * 0.5 - eio3(leave) * 0.35, sc = L.big ? lerp(0.86, 1, p) : 1;
+        w.style.opacity = op.toFixed(3);
+        w.style.transform = 'translateY(' + ty.toFixed(3) + 'em) scale(' + sc.toFixed(3) + ')';
+        w.style.filter = p < 1 ? 'blur(' + ((1 - p) * 6).toFixed(1) + 'px)' : 'none';
+      });
+      L.el.style.display = (t < L.t0 - 0.05 || leave >= 1) ? 'none' : '';
+    });
+    var src = document.getElementById('src'); src.style.opacity = eo3(seg(t, 13.5, 14.2)).toFixed(3);
+    src.style.transform = 'translateY(' + ((1 - eo3(seg(t, 13.5, 14.2))) * 14).toFixed(1) + 'px)';
+  }
+  var hud = document.getElementById('hud'), ptsEl = document.getElementById('pts'), bar = document.getElementById('racebar'), pct = document.getElementById('racepct'), eyebrow = document.getElementById('eyebrow');
+  function setHud(t) {
+    var hin = eo3(seg(t, 1.5, 2.1)), hout = eio3(seg(t, T_END, T_END + 0.5));
+    hud.style.opacity = (hin * (1 - hout)).toFixed(3);
+    hud.style.transform = 'translateY(' + ((1 - hin) * 20 - hout * 20).toFixed(1) + 'px)';
+    var s = score(t);
+    ptsEl.textContent = s.v.toLocaleString('en-GB');
+    ptsEl.style.transform = 'scale(' + (1 + 0.09 * Math.sin(Math.PI * s.pop)).toFixed(3) + ')';
+    ptsEl.style.color = (t > T_CIRC + 0.5 && s.pop > 0.5) ? COL.amber : COL.ink;
+    var race = t < T_BRANCH ? courseF(t) : S_BRANCH;
+    var rp = Math.round((race - S_START) / (1 - S_START) * 100);
+    bar.style.width = ((race - S_START) / (1 - S_START) * 100).toFixed(2) + '%';
+    pct.textContent = rp + '%';
+    pct.style.color = t > 10.5 ? COL.red : COL.ink;
+    bar.style.background = t > 10.5 ? COL.red : COL.accent;
+    var ein = eo3(seg(t, 0.3, 0.9)), eout = eio3(seg(t, T_END, T_END + 0.5));
+    eyebrow.style.opacity = (ein * (1 - eout)).toFixed(3);
+  }
+
+  /* ---------------------------------------------------------------- frame */
+  function render(t) {
+    t = clamp(t, 0, DUR);
+    var C = cam(t);
+    var worldA = 1 - eio3(seg(t, T_END, T_END + 0.7));
+    var fadeIn = eo3(seg(t, 0, 0.6));
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = COL.bg; ctx.fillRect(0, 0, W, H);
+    ctx.translate(W / 2, H / 2); ctx.rotate(C.rot); ctx.scale(C.z, C.z); ctx.translate(-C.x, -C.y);
+    var a = worldA * fadeIn;
+    if (a > 0.001) {
+      drawWater(t, a);
+      drawCourse(t, a);
+      ctx.save(); ctx.globalAlpha = a * eo3(seg(t, 0.1, 1.2)); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 40 / C.z; ctx.shadowOffsetY = 10; ctx.drawImage(land, -PAD, -PAD); ctx.restore();
+      drawBuoys(t, a); drawTargets(t, a);
+    }
+    drawLoop(t, 1);
+    if (a > 0.001) { drawWake(t, a); drawPops(t, a, C.z); }
+    drawBoat(t, fadeIn);
+    drawFire(t, 1);
+    // vignette
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    var vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.95);
+    vg.addColorStop(0, 'rgba(15,25,21,0)'); vg.addColorStop(1, 'rgba(15,25,21,.55)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    setHud(t); setLines(t);
+  }
+
+  /* ------------------------------------------------------------ playback */
+  var params = new URLSearchParams(location.search);
+  function fit() { var s = Math.min(innerWidth / W, innerHeight / H); document.getElementById('stage').style.setProperty('--s', s); }
+  fit(); addEventListener('resize', fit);
+  window.seek = function (t) { return document.fonts.ready.then(function () { render(t); return true; }); };
+  window.DURATION = DUR; window.EVENTS = EVENTS; window.MARKS = { fire: T_FIRE, circ: T_CIRC, launch: T_LAUNCH, end: T_END };
+  if (!params.has('render')) {
+    var start = null;
+    document.fonts.ready.then(function () {
+      (function loop(now) { if (start == null) start = now; var t = ((now - start) / 1000) % (DUR + 1.5); render(Math.min(t, DUR)); requestAnimationFrame(loop); })(performance.now());
+    });
+  } else if (params.has('t')) { window.seek(parseFloat(params.get('t'))); }
+})();
+</script>
+</body>
+</html>
