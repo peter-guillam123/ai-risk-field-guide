@@ -8,4 +8,4 @@ Design: its own look (sage paper, pine ink, kingfisher blue, amber; Bricolage Gr
 - The model's training data predates the summer 2026 events, so anything new needs fresh research from primary sources, labelled by how it was checked.
 - Add a diary entry in `js/content.js` (`GUIDE.prose['about-body']`) with each significant change.
 - Artifact: rebuild with `tools/build_artifact.py` and republish to https://claude.ai/artifact/6drbcp2KXPQbDFHkVQbPUZ
-- GitHub: `peter-guillam123/ai-risk-field-guide`, private until Chris says otherwise.
+- GitHub: `peter-guillam123/ai-risk-field-guide`, public. Pushes to `main` deploy to https://peter-guillam123.github.io/ai-risk-field-guide/ through `.github/workflows/pages.yml`.

@@ -2,6 +2,8 @@
 
 A plain-English guide to the argument about AI and existential risk, for readers who know nothing about AI. It covers how the technology works, what went wrong at Hugging Face in summer 2026, who is saying what, and why. Correct as of 21 September 2026, with later additions noted in its diary.
 
+Read it at https://peter-guillam123.github.io/ai-risk-field-guide/
+
 Built by Chris Moran with Claude, an AI model made by Anthropic. The page's About section says what that means and what to distrust.
 
 ## What's here
